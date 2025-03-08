@@ -35,58 +35,59 @@
     </div>
   </template>
   
-  <script setup>
-  import { ref } from 'vue';
-  import axios from 'axios';
-  
-  const searchQuery = ref('');
-  const animeResults = ref([]);
-  const isLoading = ref(false);
-  const error = ref('');
-  
-  // Search anime
-  const searchAnime = async () => {
-    if (searchQuery.value.length < 3) return; // Minimum search query length
-  
-    isLoading.value = true;
-    error.value = '';
-  
-    try {
-      const response = await axios.get('http://localhost:5000/search-anime', {
-        params: { query: searchQuery.value, limit: 3 },
-        withCredentials: true,
-      });
-      animeResults.value = response.data.data;
-    } catch (err) {
-      console.error('Error searching anime:', err);
-      error.value = 'Failed to search anime. Please try again.';
-    } finally {
-      isLoading.value = false;
+<script setup>
+import { ref } from 'vue';
+import axios from 'axios';
+
+const searchQuery = ref('');
+const animeResults = ref([]);
+const isLoading = ref(false);
+const error = ref('');
+
+// Search anime
+const searchAnime = async () => {
+if (searchQuery.value.length < 3) return; // Minimum search query length
+
+isLoading.value = true;
+error.value = '';
+
+try {
+    const response = await axios.get('http://localhost:5000/search-anime', {
+    params: { query: searchQuery.value, limit: 3 },
+    withCredentials: true,
+    });
+    animeResults.value = response.data.data;
+} catch (err) {
+    console.error('Error searching anime:', err);
+    error.value = 'Failed to search anime. Please try again.';
+} finally {
+    isLoading.value = false;
+}
+};
+
+// add anime to the user's list
+const addAnimeToList = async (anime) => {
+try {
+    const response = await axios.post(
+    'http://localhost:5000/add-anime',
+    {
+        anime_id: anime.mal_id,
+        title: anime.title,
+        status: 'plan-to-watch', 
+        episodes_watched: 0,
+        rating: 1,
+        notes: '',
+        image_url: anime.value.images.jpg.image_url,
+    },
+    { withCredentials: true }
+    );
+
+    if (response.status === 201) {
+    alert('Anime added to your list!');
     }
-  };
-  
-  // add anime to the user's list
-  const addAnimeToList = async (anime) => {
-    try {
-      const response = await axios.post(
-        'http://localhost:5000/add-anime',
-        {
-          anime_id: anime.mal_id,
-          title: anime.title,
-          status: 'plan-to-watch', 
-          episodes_watched: 0,
-          rating: 1,
-          notes: '',
-        },
-        { withCredentials: true }
-      );
-  
-      if (response.status === 201) {
-        alert('Anime added to your list!');
-      }
-    } catch (err) {
-      console.error('Failed to add anime:', err);
-      alert('Failed to add anime. Please try again.');
-    }
-  };
+} catch (err) {
+    console.error('Failed to add anime:', err);
+    alert('Failed to add anime. Please try again.');
+}
+};
 </script>

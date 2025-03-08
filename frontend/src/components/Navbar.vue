@@ -33,7 +33,14 @@
             class="text-gray-700 hover:text-blue-600 transition duration-200"
             >
             Search Anime
-            </router-link>
+        </router-link>
+        <router-link
+            v-if="authStore.isAuthenticated"
+            to="/profile"
+            class="text-gray-700 hover:text-blue-600 transition duration-200"
+            >
+            Profile
+        </router-link>
         <button
           v-if="authStore.isAuthenticated"
           @click="handleLogout"
