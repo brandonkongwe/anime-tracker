@@ -124,7 +124,7 @@ app.post('/add-anime', (req, res) => {
   // check if user is authenticated
   if (!req.session.userId) {return res.status(401).json({ message: 'Unauthorized' });}
 
-  const { anime_id, title, status, episodes_watched, rating, notes } = req.body;
+  const { anime_id, title, status, episodes_watched, rating, notes, image_url } = req.body;
   
   // add type conversion for numeric fields
   const episodesWatched = parseInt(episodes_watched, 10) || 0;
@@ -137,14 +137,15 @@ app.post('/add-anime', (req, res) => {
       status,
       episodes_watched: episodesWatched,
       rating: ratingValue,
-      notes
+      notes,
+      image_url
   });
   
-  const query = 'INSERT INTO anime_list (user_id, anime_id, title, status, episodes_watched, rating, notes) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const query = 'INSERT INTO anime_list (user_id, anime_id, title, status, episodes_watched, rating, notes, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
   
   db.query(
       query,
-      [req.session.userId, anime_id, title, status, episodesWatched, ratingValue, notes],
+      [req.session.userId, anime_id, title, status, episodesWatched, ratingValue, notes, image_url],
       (err, result) => {
           if (err) {
               console.error('Database error:', err);
@@ -166,6 +167,7 @@ app.put('/anime-list/:id', (req, res) => {
   if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 
   const { status, episodes_watched, rating, notes } = req.body;
+
   const query =
     'UPDATE anime_list SET status = ?, episodes_watched = ?, rating = ?, notes = ? WHERE id = ? AND user_id = ?';
   db.query(
@@ -186,6 +188,41 @@ app.delete('/anime-list/:id', (req, res) => {
       if (err) return res.status(500).json({ message: 'Failed to delete anime' });
       res.json({ message: 'Anime deleted' });
     });
+});
+
+
+// Get user profile
+app.get('/profile', (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
+
+  const query = 'SELECT * FROM users WHERE id = ?';
+  db.query(query, [req.session.userId], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Failed to fetch profile' });
+    res.json(results[0]);
+  });
+});
+
+// Update user profile
+app.put('/profile', (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
+
+  const { username, email } = req.body;
+  const query = 'UPDATE users SET username = ?, email = ? WHERE id = ?';
+  db.query(query, [username, email, req.session.userId], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Failed to update profile' });
+    res.json({ message: 'Profile updated' });
+  });
+});
+
+// Delete user profile
+app.delete('/profile', (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
+
+  const query = 'DELETE FROM users WHERE id = ?';
+  db.query(query, [req.session.userId], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Failed to delete profile' });
+    res.json({ message: 'Profile deleted' });
+  });
 });
 
 const PORT = process.env.PORT || 5000;
