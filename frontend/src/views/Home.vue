@@ -8,39 +8,66 @@
             <p>Status: {{ anime.status }}</p>
             <p>Episodes Watched: {{ anime.episodes_watched }}</p>
             <p>Rating: {{ anime.rating }}</p>
+            <p>Notes: {{ anime.notes }}</p>
+            <div class="mt-2">
             <button
-            @click="handleDeleteAnime(anime.id)"
-            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-            Delete
-        </button>
+              @click="openEditModal(anime)"
+              class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
+            >
+              Edit
+            </button>
+            <button
+              @click="handleDeleteAnime(anime.id)"
+              class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            >
+              Delete
+            </button>
           </div>
         </div>
-        <div v-else>
-          <p>No anime in your list.</p>
-        </div>
+      </div>
+      <div v-else>
+        <p>No anime in your list.</p>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted } from 'vue';
-  import axios from 'axios';
-  
-  const animeList = ref([]);
-  
-  onMounted(async () => {
-    const response = await axios.get('http://localhost:5000/anime-list', { withCredentials: true });
-    animeList.value = response.data;
-  });
 
-  const handleDeleteAnime = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/anime-list/${id}`, {
-        withCredentials: true,
-      });
-      animeList.value = animeList.value.filter((anime) => anime.id !== id);
-    } catch (err) {
-      console.error('Failed to delete anime:', err);
-    }
-  };
-  </script>
+    <!-- Edit Modal -->
+    <EditAnime
+      v-if="isEditModalOpen"
+      :anime="selectedAnime"
+      @close="isEditModalOpen = false"
+      @updated="fetchAnimeList"
+    />
+  </div>
+</template>
+  
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import EditAnime from '@/components/EditAnime.vue';
+
+const animeList = ref([]);
+const isEditModalOpen = ref(false);
+const selectedAnime = ref(null);
+
+onMounted(async () => {
+  const response = await axios.get('http://localhost:5000/anime-list', { withCredentials: true });
+  animeList.value = response.data;
+});
+
+const openEditModal = (anime) => {
+  selectedAnime.value = anime;
+  isEditModalOpen.value = true;
+};
+
+
+const handleDeleteAnime = async (id) => {
+  try {
+    await axios.delete(`http://localhost:5000/anime-list/${id}`, {
+      withCredentials: true,
+    });
+    animeList.value = animeList.value.filter((anime) => anime.id !== id);
+  } catch (err) {
+    console.error('Failed to delete anime:', err);
+  }
+};
+</script>

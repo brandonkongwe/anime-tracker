@@ -166,6 +166,7 @@ app.put('/anime-list/:id', (req, res) => {
   if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 
   const { status, episodes_watched, rating, notes } = req.body;
+
   const query =
     'UPDATE anime_list SET status = ?, episodes_watched = ?, rating = ?, notes = ? WHERE id = ? AND user_id = ?';
   db.query(
