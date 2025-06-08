@@ -5,7 +5,6 @@ const MySQLStore = require('express-mysql-session')(session);
 const dotenv = require('dotenv');
 const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
 dotenv.config();
@@ -24,6 +23,7 @@ db.connect((err) => {
     console.log('MySQL connected');
 });
 
+// session store
 const options = new MySQLStore({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
@@ -50,6 +50,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// session
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -58,12 +60,13 @@ app.use(session({
     cookie: {
         secure: false,
         maxAge: 1000 * 60 * 60 * 24,
-        httpOnly: true,
-        sameSite: 'lax'
+        httpOnly: true
     }
 }));
 
 // routes
+
+// POST /register
 app.post('/register', async (req, res) => {
     const { username, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -75,6 +78,7 @@ app.post('/register', async (req, res) => {
     });
 });
 
+// POST /login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -88,12 +92,25 @@ app.post('/login', async (req, res) => {
 
     req.session.userId = user.id; // store user ID in session
     console.log('Session after login:', req.session);
+    console.log("Session ID: ", req.sessionID);
     res.json({ message: 'Logged in', user });
   });
 });
 
+// POST /logout
+app.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) return res.status(500).json({ message: 'Failed to logout' });
+    res.clearCookie('connect.sid');
+    res.json({ message: 'Logged out successfully' });
+  });
+});
+
+
+// GET /anime-list
 app.get('/anime-list', (req, res) => {
     console.log('Session in /anime-list:', req.session);
+    console.log("Session ID: ", req.sessionID);
     if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const query = 'SELECT * FROM anime_list WHERE user_id = ?';
@@ -103,9 +120,11 @@ app.get('/anime-list', (req, res) => {
     });
 });
 
+
+// GET /search-anime
 // search for anime using Jikan API
 app.get('/search-anime', async (req, res) => {
-  const { query, limit = 3 } = req.query;
+  const { query, limit = 3 } = req.query; // only 3 results coz of rate limiting
 
   try {
     const response = await axios.get(`https://api.jikan.moe/v4/anime`, {
@@ -118,8 +137,11 @@ app.get('/search-anime', async (req, res) => {
   }
 });
 
+// POST /add-anime
 app.post('/add-anime', (req, res) => {
   console.log('Session in POST /add-anime:', req.session);
+  console.log("Session ID: ", req.sessionID);
+
   
   // check if user is authenticated
   if (!req.session.userId) {return res.status(401).json({ message: 'Unauthorized' });}
@@ -163,6 +185,8 @@ app.post('/add-anime', (req, res) => {
   );
 });
 
+
+// PUT /anime-list/:id
 app.put('/anime-list/:id', (req, res) => {
   if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 
@@ -180,6 +204,8 @@ app.put('/anime-list/:id', (req, res) => {
   );
 });
 
+
+// DELETE /anime-list/:id
 app.delete('/anime-list/:id', (req, res) => {
     if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
   
@@ -191,8 +217,10 @@ app.delete('/anime-list/:id', (req, res) => {
 });
 
 
-// Get user profile
+// GET /profile
 app.get('/profile', (req, res) => {
+  console.log("Session ID in profile: ", req.sessionID);
+
   if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 
   const query = 'SELECT * FROM users WHERE id = ?';
@@ -202,7 +230,8 @@ app.get('/profile', (req, res) => {
   });
 });
 
-// Update user profile
+
+// PUT /profile
 app.put('/profile', (req, res) => {
   if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 
@@ -214,7 +243,8 @@ app.put('/profile', (req, res) => {
   });
 });
 
-// Delete user profile
+
+// DELETE /profile
 app.delete('/profile', (req, res) => {
   if (!req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
 

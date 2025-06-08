@@ -41,6 +41,8 @@
       </div>
       <div v-else>
         <p>No anime in your list.</p>
+        <br />
+        <router-link to="/add-anime" class="bg-white hover:bg-gray-100 text-indigo-600 px-8 py-3 rounded-md text-lg font-medium transition duration-200">Add Here</router-link>
       </div>
     </div>
 

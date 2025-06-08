@@ -9,4 +9,12 @@
 <script setup>
 import Navbar from './components/Navbar.vue';
 import Footer from './components/Footer.vue';
+import { onMounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
+
+onMounted(async () => {
+  await authStore.checkAuthStatus();
+});
 </script>
