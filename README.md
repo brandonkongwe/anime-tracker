@@ -1,11 +1,11 @@
 # Anime Tracker
 
-A full-stack web application for tracking your anime watching progress. Built with Vue.js frontend and Express.js backend.
+A (bare minimum) full-stack web application for tracking your anime watching progress. Built with Vue.js frontend and Express.js backend.
 
 ## Features
 
 - User authentication (register/login)
-- Search anime using the Jikan API
+- Search anime using the Jikan API (only returns 3 per second due to rate limiting)
 - Add anime to your personal list
 - Track watching status, episodes watched, and rating
 - Edit and delete entries
